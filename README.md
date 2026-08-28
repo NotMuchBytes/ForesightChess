@@ -6,6 +6,7 @@ A graphical chess game written in C++ using [Raylib](https://www.raylib.com/). T
 
 - Raylib graphical interface
 - Main menu with **Play White**, **Play Black**, and **Quit** buttons
+- Puzzle mode with 365 mate-in-one challenges across six varied tactical layouts
 - Bitmap chess-piece icons
 - Mouse-based piece selection and movement
 - Legal movement and captures
@@ -39,6 +40,8 @@ The build automatically downloads Raylib and copies the piece icons beside the e
 
 - **PLAY WHITE**: Play as White
 - **PLAY BLACK**: Play as Black; the engine makes the opening move
+- **PUZZLES**: Solve the built-in mate-in-one challenge
+- **N**: Move to the next puzzle after solving one
 - **Mouse click**: Select a piece, then select its destination
 - **QUIT**: Return to the main menu
 - **R**: Restart after game over
@@ -65,4 +68,4 @@ ForesightChess/
 
 ## Notes
 
-The engine currently uses material evaluation with alpha-beta search. The best next upgrades would be piece-square tables, mobility scoring, king safety, pawn-structure evaluation, move ordering, and a transposition table. These improvements should make the engine feel much smarter without requiring excessive search depth. Increasing the search depth can also improve play, but engine moves may take longer.
+The engine uses material evaluation, piece-square tables, mobility, king-safety checks, pawn-structure scoring, capture-first move ordering, alpha-beta pruning, and a transposition table. It searches three plies by default. Increasing the search depth can improve play, but engine moves may take longer. Checkmate and stalemate are detected before the engine attempts a move, so terminal positions are shown on the victory screen instead of producing an empty move.

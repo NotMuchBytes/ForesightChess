@@ -10,6 +10,7 @@ class Board {
 public:
     Board();
     void reset();
+    void setupPuzzle(int puzzleNumber);
     bool isValidMove(const Move& move) const;
     void makeMove(const Move& move);
     bool isInCheck(bool white) const;
@@ -19,6 +20,7 @@ public:
     int getPiece(int x, int y) const;
     bool isWhiteTurn() const;
     std::string getPositionKey() const;
+    bool isPuzzleSolution(const Move& move, int puzzleNumber) const;
 
 private:
     std::array<std::array<int, 8>, 8> board; // 0 for empty, other values for pieces

@@ -14,6 +14,7 @@ int Engine::evaluatePosition(const Board& board) { return evaluator.evaluatePosi
 
 Move Engine::getBestMove(int depth) {
     transpositionTable.clear();
+    if (depth < 1) depth = 1;
     const bool engineWhite = currentBoard.isWhiteTurn();
     const std::vector<Move> moves = currentBoard.generateLegalMoves(engineWhite);
     if (moves.empty()) return Move();
@@ -22,7 +23,7 @@ Move Engine::getBestMove(int depth) {
     for (const Move& move : moves) {
         Board next = currentBoard;
         next.makeMove(move);
-        int score = minimax(next, depth > 0 ? depth - 1 : 0, true,
+        int score = minimax(next, depth > 0 ? depth - 1 : 0, !engineWhite,
                     std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
         if ((engineWhite && score > bestScore) || (!engineWhite && score < bestScore)) {
             bestScore = score; best = move;
@@ -32,15 +33,16 @@ Move Engine::getBestMove(int depth) {
 }
 
 int Engine::minimax(const Board& board, int depth, bool maximizing, int alpha, int beta) {
+    const bool sideToMove = maximizing;
+    const std::vector<Move> moves = board.generateLegalMoves(sideToMove);
+    if (moves.empty()) {
+        if (board.isInCheck(sideToMove)) return sideToMove ? -1000000 : 1000000;
+        return 0;
+    }
     if (depth == 0) return evaluatePosition(board);
     const std::string key = board.getPositionKey() + std::to_string(depth) + (maximizing ? "w" : "b");
     const auto cached = transpositionTable.find(key);
     if (cached != transpositionTable.end()) return cached->second;
-    const std::vector<Move> moves = board.generateLegalMoves(maximizing);
-    if (moves.empty()) {
-        if (board.isInCheck(maximizing)) return maximizing ? -1000000 : 1000000;
-        return 0;
-    }
     std::vector<Move> ordered = moves;
     std::sort(ordered.begin(), ordered.end(), [&board](const Move& a, const Move& b) {
         return std::abs(board.getPiece(b.getToX(), b.getToY())) < std::abs(board.getPiece(a.getToX(), a.getToY()));

@@ -1,7 +1,7 @@
 #include "Renderer.h"
 #include <string>
 
-Renderer::Renderer() : selectedX(-1), selectedY(-1), lastEngineMove(), hasEngineMove(false) {
+Renderer::Renderer() : selectedX(-1), selectedY(-1), lastEngineMove(), hasEngineMove(false), puzzleIntroUntil(0), puzzleNumber(1) {
 	InitWindow(boardSize, boardSize + 50, "ForesightChess");
 	const char names[] = "pnbrqk";
 	for (int type = 1; type <= 6; ++type) {
@@ -28,23 +28,33 @@ void Renderer::renderMenu() const {
 	DrawText("PLAY WHITE", 320 - MeasureText("PLAY WHITE", 24) / 2, 265, 24, RAYWHITE);
 	DrawRectangle(200, 320, 240, 55, Color{75, 95, 145, 255});
 	DrawText("PLAY BLACK", 320 - MeasureText("PLAY BLACK", 24) / 2, 335, 24, RAYWHITE);
-	DrawRectangle(200, 390, 240, 55, Color{150, 55, 55, 255});
-	DrawText("QUIT", 320 - MeasureText("QUIT", 24) / 2, 405, 24, RAYWHITE);
+	DrawRectangle(200, 390, 240, 55, Color{180, 125, 45, 255});
+	DrawText("PUZZLES", 320 - MeasureText("PUZZLES", 24) / 2, 405, 24, RAYWHITE);
+	DrawRectangle(200, 460, 240, 55, Color{150, 55, 55, 255});
+	DrawText("QUIT", 320 - MeasureText("QUIT", 24) / 2, 475, 24, RAYWHITE);
 	DrawText("Choose your side", 320 - MeasureText("Choose your side", 18) / 2, 490, 18, GRAY);
 	EndDrawing();
 }
 
 int Renderer::menuAction() const {
-	if (!IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) return 0;
+	if (!IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) return 0;
 	const Vector2 p = GetMousePosition();
 	if (p.x >= 200 && p.x <= 440 && p.y >= 250 && p.y <= 305) return 1;
 	if (p.x >= 200 && p.x <= 440 && p.y >= 320 && p.y <= 375) return 2;
 	if (p.x >= 200 && p.x <= 440 && p.y >= 390 && p.y <= 445) return 3;
+	if (p.x >= 200 && p.x <= 440 && p.y >= 460 && p.y <= 515) return 4;
 	return 0;
 }
 
+void Renderer::renderPuzzle(const Board& board, const char* message) const {
+	if (puzzleIntroUntil == 0) puzzleIntroUntil = GetTime() + 1.0;
+	puzzleOverlayMessage = message;
+	render(board);
+	puzzleOverlayMessage.clear();
+}
+
 bool Renderer::quitClicked() const {
-	if (!IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) return false;
+	if (!IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) return false;
 	const Vector2 p = GetMousePosition();
 	return p.x >= 535 && p.x <= 625 && p.y >= 642 && p.y <= 672;
 }
@@ -65,6 +75,7 @@ void Renderer::render(const Board& board) const {
 	}
 	std::string status = board.isWhiteTurn() ? "White to move - click a piece, then its destination"
 											 : "Engine is thinking...";
+	if (!puzzleOverlayMessage.empty()) status = puzzleOverlayMessage;
 	if (board.isWhiteTurn() && hasEngineMove) {
 		status = "Engine moved " + std::string(1, static_cast<char>('a' + lastEngineMove.getFromX()))
 			   + std::to_string(8 - lastEngineMove.getFromY()) + " to "
@@ -77,6 +88,12 @@ void Renderer::render(const Board& board) const {
 	if (board.isInCheck(board.isWhiteTurn())) {
 		DrawRectangle(500, 642, 125, 28, RED);
 		DrawText("CHECK!", 515, 646, 20, WHITE);
+	}
+	if (!puzzleOverlayMessage.empty() && GetTime() < puzzleIntroUntil) {
+		DrawRectangle(70, 85, 500, 90, Color{20, 25, 35, 235});
+		std::string title = "PUZZLE " + std::to_string(puzzleNumber) + "/365: FIND CHECKMATE";
+		DrawText(title.c_str(), 320 - MeasureText(title.c_str(), 24) / 2, 102, 24, GOLD);
+		DrawText(puzzleOverlayMessage.c_str(), 320 - MeasureText(puzzleOverlayMessage.c_str(), 20) / 2, 140, 20, RAYWHITE);
 	}
 	EndDrawing();
 }
@@ -94,8 +111,11 @@ void Renderer::renderGameOver(const Board& board, const char* message) const {
 }
 
 bool Renderer::wantsRestart() const { return IsKeyPressed(KEY_R); }
+bool Renderer::wantsNextPuzzle() const { return IsKeyPressed(KEY_N); }
+void Renderer::setPuzzleNumber(int number) { puzzleNumber = number; }
 void Renderer::setEngineMove(const Move& move) { lastEngineMove = move; hasEngineMove = true; }
 void Renderer::clearEngineMove() { hasEngineMove = false; }
+void Renderer::resetPuzzleIntro() { puzzleIntroUntil = 0; }
 
 Move Renderer::getPlayerMove() const {
 	if (!IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) return Move(-1, -1, -1, -1);

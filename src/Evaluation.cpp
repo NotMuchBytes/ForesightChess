@@ -19,7 +19,7 @@ int pieceSquare(int type, int x, int y, bool white) {
 	if (type == 3) return 5 * (3 - std::min(3, std::abs(3 - x))) + 5 * (3 - std::min(3, std::abs(3 - y)));
 	if (type == 4) return 2 * (white ? 7 - y : y);
 	if (type == 5) return 3 * (3 - std::min(3, std::abs(3 - x)));
-	return 0;
+	return 2 * (3 - std::min(3, std::abs(3 - x))) + 2 * (3 - std::min(3, std::abs(3 - y)));
 }
 }
 
@@ -55,6 +55,17 @@ int Evaluation::calculateMaterialScore(const Board& board) {
 		}
 		if (whitePawns && !whiteNeighbor) score -= 10;
 		if (blackPawns && !blackNeighbor) score += 10;
+	}
+	if (score > -1200 && score < 1200) {
+		int whiteKingX = -1, whiteKingY = -1, blackKingX = -1, blackKingY = -1;
+		for (int y = 0; y < 8; ++y) for (int x = 0; x < 8; ++x) {
+			if (board.getPiece(x, y) == 6) { whiteKingX = x; whiteKingY = y; }
+			if (board.getPiece(x, y) == -6) { blackKingX = x; blackKingY = y; }
+		}
+		if (whiteKingX >= 0 && blackKingX >= 0) {
+			const int kingDistance = std::abs(whiteKingX - blackKingX) + std::abs(whiteKingY - blackKingY);
+			score += 8 * (14 - kingDistance);
+		}
 	}
 	return score;
 }
